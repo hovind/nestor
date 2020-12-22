@@ -11,14 +11,14 @@ mod tests {
         let q = u * v;
         println!("{:?}", q);
 
-        let x = Matrix::<f64, 4, 2>::zero();
-        let y = Vector::<{Variance::Contra}, f64, 2>::zero();
-        let z : Vector<{Variance::Contra}, f64, 4> = x * y;
+        let x = Matrix::<f64, 2, 4>::zero();
+        let y = Vector::<{Variance::Contra}, f64, 4>::zero();
+        let z : Vector<{Variance::Contra}, f64, 2> = x * y;
         println!("{:?}", z);
 
-        let a = Matrix::<f64, 2, 1>::zero();
-        let b = Matrix::<f64, 3, 2>::zero();
-        let c : Matrix<f64, 3, 1> = a * b;
+        let a = Matrix::<f64, 1, 2>::zero();
+        let b = Matrix::<f64, 2, 3>::zero();
+        let c : Matrix<f64, 1, 3> = a * b;
         println!("{:?}", c);
 
         let r = TwoForm::<f64, 10>::zero();
@@ -151,6 +151,6 @@ U: Add<U, Output = U> + Zero,
     }
 }
 
-pub type Matrix<T, const N: usize, const M: usize> = Vector<{Variance::Co}, Vector<{Variance::Contra}, T, N>, M>;
+pub type Matrix<T, const R: usize, const C: usize> = Vector<{Variance::Contra}, Vector<{Variance::Co}, T, C>, R>;
 
 pub type TwoForm<T, const N: usize> = Vector<{Variance::Co}, Vector<{Variance::Co}, T, N>, N>;
