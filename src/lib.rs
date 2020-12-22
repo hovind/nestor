@@ -153,4 +153,4 @@ U: Add<U, Output = U> + Zero,
 
 pub type Matrix<T, const R: usize, const C: usize> = Vector<{Variance::Contra}, Vector<{Variance::Co}, T, C>, R>;
 
-pub type TwoForm<T, const N: usize> = Vector<{Variance::Co}, Vector<{Variance::Co}, T, N>, N>;
+pub type BilinearForm<T, const N: usize> = Vector<{Variance::Co}, Vector<{Variance::Co}, T, N>, N>;
