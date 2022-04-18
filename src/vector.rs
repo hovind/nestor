@@ -6,6 +6,15 @@ pub enum Variance {
     Contra,
 }
 
+impl Variance {
+    const fn flip(self) -> Self {
+        match self {
+            Variance::Co => Variance::Contra,
+            Variance::Contra => Variance::Co,
+        }
+    }
+}
+
 pub auto trait Distributive {}
 
 #[derive(Clone, Copy, Debug)]
@@ -88,30 +97,14 @@ Vector<V, U, N>: Zero,
     }
 }
 
-impl<const N: usize, S, T, U> Mul<Vector<{Variance::Contra}, T, N>> for Vector<{Variance::Co}, S, N> where
+impl<const N: usize, const V: Variance, S, T, U> Mul<Vector<{V.flip()}, T, N>> for Vector<V, S, N> where
 S: Clone + Mul<T, Output = U>,
 T: Clone,
 U: Add<U, Output = U> + Zero,
 {
     type Output = U;
 
-    fn mul(self, rhs: Vector<{Variance::Contra}, T, N>) -> Self::Output {
-        let mut x = U::zero();
-        for i in 0..N {
-            x = x + self.0[i].clone() * rhs.0[i].clone();
-        }
-        x
-    }
-}
-
-impl<const N: usize, S, T, U> Mul<Vector<{Variance::Co}, T, N>> for Vector<{Variance::Contra}, S, N> where
-S: Clone + Mul<T, Output = U>,
-T: Clone,
-U: Add<U, Output = U> + Zero,
-{
-    type Output = U;
-
-    fn mul(self, rhs: Vector<{Variance::Co}, T, N>) -> Self::Output {
+    fn mul(self, rhs: Vector<{V.flip()}, T, N>) -> Self::Output {
         let mut x = U::zero();
         for i in 0..N {
             x = x + self.0[i].clone() * rhs.0[i].clone();
