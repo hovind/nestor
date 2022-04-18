@@ -1,5 +1,5 @@
 #![allow(incomplete_features)]
-#![feature(array_map, auto_traits, const_generics, negative_impls)]
+#![feature(auto_traits, adt_const_params, negative_impls)]
 
 mod vector;
 
