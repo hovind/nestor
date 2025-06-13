@@ -1,6 +1,6 @@
 use core::ops::{Add, Mul};
 
-#[derive(Eq, PartialEq)]
+#[derive(std::marker::ConstParamTy, Eq, PartialEq)]
 pub enum Variance {
     Co,
     Contra,
