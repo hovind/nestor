@@ -15,16 +15,17 @@ impl Variance {
     }
 }
 
-pub auto trait Distributive {}
-
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Vector<const V: Variance, T, const N: usize>([T; N]);
-
-impl<const V: Variance, T, const N: usize> !Distributive for Vector<V, T, N> {}
-
 
 pub trait Zero {
     fn zero() -> Self;
+}
+
+impl Zero for f32 {
+    fn zero() -> Self {
+        0.0f32
+    }
 }
 
 impl Zero for f64 {
@@ -34,80 +35,68 @@ impl Zero for f64 {
 }
 
 impl<const V: Variance, T, const N: usize> Zero for Vector<V, T, N> where
-T: Copy + Zero,
+T: Zero,
 {
     fn zero() -> Self {
-        Self([T::zero(); N])
+        Self(core::array::from_fn(|_| T::zero()))
     }
 }
 
-impl<const V: Variance, const N: usize, T> Add<Self> for Vector<V, T, N> where
-T: Clone + Add<T, Output = T> + Zero,
-Self: Zero,
+impl<const V: Variance, S, T, U, const N: usize> Add<&Vector<V, S, N>> for &Vector<V, T, N> where
+for<'a, 'b> &'a T: Add<&'b S, Output = U> + Zero,
+Vector<V, U, N>: Zero,
 {
-    type Output = Self;
+    type Output = Vector<V, U, N>;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        let mut x = Self::zero();
+    fn add(self, rhs: &Vector<V, S, N>) -> Self::Output {
+        let mut x = Vector::<V, U, N>::zero();
         for i in 0..N {
-            x.0[i] = self.0[i].clone() + rhs.0[i].clone();
+            x.0[i] = &self.0[i] + &rhs.0[i];
         }
         x
     }
 }
 
-impl<const V: Variance, S, T, U, const N: usize> Mul<T> for Vector<V, S, N> where
-S: Clone + Mul<T, Output = U>,
-T: Clone + Distributive,
+impl<const V: Variance, S, T, U, const M: usize, const N: usize> Mul<&Vector<V, S, M>> for &Vector<V, T, N> where
+for<'a, 'b> &'a Vector<V, T, N>: Mul<&'b S, Output = U>,
 Vector<V, U, N>: Zero,
 {
     type Output = Vector<V, U, N>;
 
-    fn mul(self, rhs: T) -> Self::Output {
+    fn mul(self, rhs: &Vector<V, S, M>) -> Self::Output {
         let mut x = Vector::<V, U, N>::zero();
-        for i in 1..N {
-            x.0[i] = self.0[i].clone() * rhs.clone();
+        for i in 0..N {
+            x.0[i] = self * &rhs.0[i];
         }
         x
     }
 }
 
-impl<const V: Variance, const N: usize> Mul<Vector<V, f64, N>> for f64 where
-{
-    type Output = Vector<V, f64, N>;
-
-    fn mul(self, rhs: Vector<V, f64, N>) -> Self::Output {
-        Vector(rhs.0.map(|s| s * self.clone()))
-    }
-}
-
-impl<const V: Variance, S, T, U, const M: usize, const N: usize> Mul<Vector<V, T, M>> for Vector<V, S, N> where
-S: Clone + Mul<Vector<V, T, M>, Output = U>,
-Vector<V, T, M>: Clone,
-Vector<V, U, N>: Zero,
-{
-    type Output = Vector<V, U, N>;
-
-    fn mul(self, rhs: Vector<V, T, M>) -> Self::Output {
-        let mut x = Vector::<V, U, N>::zero();
-        for i in 1..N {
-            x.0[i] = self.0[i].clone() * rhs.clone();
-        }
-        x
-    }
-}
-
-impl<const N: usize, const V: Variance, S, T, U> Mul<Vector<{V.flip()}, T, N>> for Vector<V, S, N> where
-S: Clone + Mul<T, Output = U>,
-T: Clone,
+impl<const V: Variance, S, T, U, const N: usize> Mul<&Vector<{V.flip()}, S, N>> for &Vector<V, T, N> where
+for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
 U: Add<U, Output = U> + Zero,
 {
     type Output = U;
 
-    fn mul(self, rhs: Vector<{V.flip()}, T, N>) -> Self::Output {
+    fn mul<'b>(self, rhs: &Vector<{V.flip()}, S, N>) -> Self::Output {
         let mut x = U::zero();
         for i in 0..N {
-            x = x + self.0[i].clone() * rhs.0[i].clone();
+            x = x + &self.0[i] * &rhs.0[i];
+        }
+        x
+    }
+}
+
+impl<const V: Variance, T, U, const N: usize> Mul<&f64> for &Vector<V, T, N> where
+for<'a, 'b> &'a T: Mul<&'b f64, Output = U>,
+U: Add<U, Output = U> + Zero,
+{
+    type Output = U;
+
+    fn mul(self, rhs: &f64) -> Self::Output {
+        let mut x = U::zero();
+        for i in 0..N {
+            x = x + &self.0[i] * &rhs;
         }
         x
     }

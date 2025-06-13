@@ -18,7 +18,7 @@ mod tests {
         /* Just check that these things type check */
         let u = Vector::<f64, 2>::zero();
         let v = Vector::<f64, 4>::zero();
-        let q = u * v;
+        let q = &u * &v;
         println!("{:?}", q);
 
         let x = Matrix::<f64, 2, 4>::zero();
