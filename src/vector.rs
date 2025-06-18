@@ -72,13 +72,28 @@ Vector<V, U, N>: Zero,
     }
 }
 
-impl<const V: Variance, S, T, U, const N: usize> Mul<&Vector<{V.flip()}, S, N>> for &Vector<V, T, N> where
+impl<S, T, U, const N: usize> Mul<&Vector<{Variance::Contra}, S, N>> for &Vector<{Variance::Co}, T, N> where
 for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
 U: Add<U, Output = U> + Zero,
 {
     type Output = U;
 
-    fn mul<'b>(self, rhs: &Vector<{V.flip()}, S, N>) -> Self::Output {
+    fn mul<'b>(self, rhs: &Vector<{Variance::Contra}, S, N>) -> Self::Output {
+        let mut x = U::zero();
+        for i in 0..N {
+            x = x + &self.0[i] * &rhs.0[i];
+        }
+        x
+    }
+}
+
+impl<S, T, U, const N: usize> Mul<&Vector<{Variance::Co}, S, N>> for &Vector<{Variance::Contra}, T, N> where
+for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
+U: Add<U, Output = U> + Zero,
+{
+    type Output = U;
+
+    fn mul<'b>(self, rhs: &Vector<{Variance::Co}, S, N>) -> Self::Output {
         let mut x = U::zero();
         for i in 0..N {
             x = x + &self.0[i] * &rhs.0[i];
