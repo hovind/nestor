@@ -42,23 +42,24 @@ T: Zero,
     }
 }
 
-impl<const V: Variance, S, T, U, const N: usize> Add<&Vector<V, S, N>> for &Vector<V, T, N> where
-for<'a, 'b> &'a T: Add<&'b S, Output = U> + Zero,
+impl<const V: Variance, S, T, U, const N: usize> Add<Vector<V, S, N>> for Vector<V, T, N> where
+T: Add<S, Output = U> + Clone,
+S: Clone,
 Vector<V, U, N>: Zero,
 {
     type Output = Vector<V, U, N>;
 
-    fn add(self, rhs: &Vector<V, S, N>) -> Self::Output {
+    fn add(self, rhs: Vector<V, S, N>) -> Self::Output {
         let mut x = Vector::<V, U, N>::zero();
         for i in 0..N {
-            x.0[i] = &self.0[i] + &rhs.0[i];
+            x.0[i] = self.0[i].clone() + rhs.0[i].clone();
         }
         x
     }
 }
 
 impl<const V: Variance, S, T, U, const M: usize, const N: usize> Mul<&Vector<V, S, M>> for &Vector<V, T, N> where
-for<'a, 'b> &'a Vector<V, T, N>: Mul<&'b S, Output = U>,
+for<'a, 'b> &'a T: Mul<&'b Vector<V, S, M>, Output = U>,
 Vector<V, U, N>: Zero,
 {
     type Output = Vector<V, U, N>;
@@ -66,13 +67,28 @@ Vector<V, U, N>: Zero,
     fn mul(self, rhs: &Vector<V, S, M>) -> Self::Output {
         let mut x = Vector::<V, U, N>::zero();
         for i in 0..N {
-            x.0[i] = self * &rhs.0[i];
+            x.0[i] = &self.0[i] * rhs;
         }
         x
     }
 }
 
 impl<S, T, U, const N: usize> Mul<&Vector<{Variance::Contra}, S, N>> for &Vector<{Variance::Co}, T, N> where
+for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
+U: Add<U, Output = U> + Zero,
+{
+    type Output = U;
+
+    fn mul<'b>(self, rhs: &Vector<{Variance::Contra}, S, N>) -> Self::Output {
+        let mut x = U::zero();
+        for i in 0..N {
+            x = x + &self.0[i] * &rhs.0[i];
+        }
+        x
+    }
+}
+
+impl<S, T, U, const N: usize> Mul<&Vector<{Variance::Contra}, S, N>> for Vector<{Variance::Co}, T, N> where
 for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
 U: Add<U, Output = U> + Zero,
 {
@@ -104,14 +120,29 @@ U: Add<U, Output = U> + Zero,
 
 impl<const V: Variance, T, U, const N: usize> Mul<&f64> for &Vector<V, T, N> where
 for<'a, 'b> &'a T: Mul<&'b f64, Output = U>,
-U: Add<U, Output = U> + Zero,
+Vector<V, U, N>: Zero,
 {
-    type Output = U;
+    type Output = Vector<V, U, N>;
 
     fn mul(self, rhs: &f64) -> Self::Output {
-        let mut x = U::zero();
+        let mut x = Vector::<V, U, N>::zero();
         for i in 0..N {
-            x = x + &self.0[i] * &rhs;
+            x.0[i] = &self.0[i] * &rhs;
+        }
+        x
+    }
+}
+
+impl<const V: Variance, T, U, const N: usize> Mul<&Vector<V, T, N>> for &f64 where
+for<'a, 'b> &'a f64: Mul<&'b T, Output = U>,
+Vector<V, U, N>: Zero,
+{
+    type Output = Vector<V, U, N>;
+
+    fn mul(self, rhs: &Vector<V, T, N>) -> Self::Output {
+        let mut x = Vector::<V, U, N>::zero();
+        for i in 0..N {
+            x.0[i] = self * &rhs.0[i];
         }
         x
     }
