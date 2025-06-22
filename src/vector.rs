@@ -73,50 +73,31 @@ Vector<V, U, N>: Zero,
     }
 }
 
-impl<S, T, U, const N: usize> Mul<&Vector<{Variance::Contra}, S, N>> for &Vector<{Variance::Co}, T, N> where
-for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
-U: Add<U, Output = U> + Zero,
-{
-    type Output = U;
 
-    fn mul<'b>(self, rhs: &Vector<{Variance::Contra}, S, N>) -> Self::Output {
-        let mut x = U::zero();
-        for i in 0..N {
-            x = x + &self.0[i] * &rhs.0[i];
+macro_rules! impl_inner_product_mul {
+    ($lhs:ty, $rhs:ty) => {
+        impl<S, T, U, const N: usize> Mul<$rhs> for $lhs where
+        for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
+        U: Add<U, Output = U> + Zero,
+        {
+            type Output = U;
+
+            fn mul<'b>(self, rhs: $rhs) -> Self::Output {
+                let mut x = U::zero();
+                for i in 0..N {
+                    x = x + &self.0[i] * &rhs.0[i];
+                }
+                x
+            }
         }
-        x
+
     }
 }
 
-impl<S, T, U, const N: usize> Mul<&Vector<{Variance::Contra}, S, N>> for Vector<{Variance::Co}, T, N> where
-for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
-U: Add<U, Output = U> + Zero,
-{
-    type Output = U;
-
-    fn mul<'b>(self, rhs: &Vector<{Variance::Contra}, S, N>) -> Self::Output {
-        let mut x = U::zero();
-        for i in 0..N {
-            x = x + &self.0[i] * &rhs.0[i];
-        }
-        x
-    }
-}
-
-impl<S, T, U, const N: usize> Mul<&Vector<{Variance::Co}, S, N>> for &Vector<{Variance::Contra}, T, N> where
-for<'a, 'b> &'a T: Mul<&'b S, Output = U>,
-U: Add<U, Output = U> + Zero,
-{
-    type Output = U;
-
-    fn mul<'b>(self, rhs: &Vector<{Variance::Co}, S, N>) -> Self::Output {
-        let mut x = U::zero();
-        for i in 0..N {
-            x = x + &self.0[i] * &rhs.0[i];
-        }
-        x
-    }
-}
+impl_inner_product_mul!(&Vector<{Variance::Contra}, T, N>, &Vector<{Variance::Co}, S, N>);
+impl_inner_product_mul!(Vector<{Variance::Contra}, T, N>, &Vector<{Variance::Co}, S, N>);
+impl_inner_product_mul!(&Vector<{Variance::Co}, T, N>, &Vector<{Variance::Contra}, S, N>);
+impl_inner_product_mul!(Vector<{Variance::Co}, T, N>, &Vector<{Variance::Contra}, S, N>);
 
 impl<const V: Variance, T, U, const N: usize> Mul<&f64> for &Vector<V, T, N> where
 for<'a, 'b> &'a T: Mul<&'b f64, Output = U>,
